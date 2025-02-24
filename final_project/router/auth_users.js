@@ -6,17 +6,34 @@ const regd_users = express.Router();
 let users = [];
 
 const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
+    // Username should be at least 3 characters long and not already exist
+    return username.length >= 3 && !users.find(user => user.username === username);
 }
 
 const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
+    // Check if username and password match records
+    return users.find(user => user.username === username && user.password === password);
 }
 
 //only registered users can login
 regd_users.post("/login", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const username = req.body.username;
+    const password = req.body.password;
+
+    if (!username || !password) {
+        return res.status(400).json({message: "Username and password are required"});
+    }
+
+    if (authenticatedUser(username, password)) {
+        let accessToken = jwt.sign({
+            username: username
+        }, 'access-token-secret', {
+            expiresIn: '1h'
+        });
+        return res.status(200).json({accessToken});
+    } else {
+        return res.status(401).json({message: "Invalid credentials"});
+    }
 });
 
 // Add a book review
