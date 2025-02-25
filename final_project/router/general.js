@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
@@ -21,12 +22,31 @@ public_users.post("/register", (req,res) => {
     }
 });
 
-// Get the book list available in the shop
-public_users.get('/', function (req, res) {
+// Function to fetch all books
+const getAllBooks = async () => {
     try {
-        res.status(200).json(JSON.parse(JSON.stringify(books)));
+        // Creating a mock API endpoint using local data
+        const response = await axios.get('http://localhost:5000/api/books', {
+            data: books
+        });
+        return response.data;
+    } catch (error) {
+        throw new Error('Error fetching books');
+    }
+};
+
+// Mock API endpoint to serve books data
+public_users.get('/api/books', (req, res) => {
+    res.json(books);
+});
+
+// Main endpoint using async/await with axios
+public_users.get('/', async (req, res) => {
+    try {
+        const booksData = await getAllBooks();
+        res.status(200).json(booksData);
     } catch(error) {
-        res.status(500).json({message: "Error retrieving books"});
+        res.status(500).json({message: error.message || "Error retrieving books"});
     }
 });
 
