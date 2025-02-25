@@ -50,19 +50,37 @@ public_users.get('/', async (req, res) => {
     }
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-    const isbn = req.params.isbn;
-
+// Function to fetch book by ISBN using async/await
+const getBookByISBN = async (isbn) => {
     try {
-        // Check if the ISBN exists in our books object
-        if (books[isbn]) {
-            return res.status(200).json(JSON.parse(JSON.stringify(books[isbn])));
-        } else {
-            return res.status(404).json({message: "Book not found"});
-        }
-    } catch(error) {
-        return res.status(500).json({message: "Error retrieving book"});
+        const response = await axios.get(`http://localhost:5000/api/isbn/${isbn}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Mock API endpoint for ISBN
+public_users.get('/api/isbn/:isbn', (req, res) => {
+    const isbn = req.params.isbn;
+    if (books[isbn]) {
+        res.json(books[isbn]);
+    } else {
+        res.status(404).json({message: "Book not found"});
+    }
+});
+
+// Main ISBN endpoint using async/await
+public_users.get('/isbn/:isbn', async (req, res) => {
+    const isbn = req.params.isbn;
+    
+    try {
+        const book = await getBookByISBN(isbn);
+        res.status(200).json(book);
+    } catch (error) {
+        res.status(500).json({
+            message: error.response?.data?.message || "Error retrieving book"
+        });
     }
 });
   
