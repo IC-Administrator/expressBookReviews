@@ -36,24 +36,28 @@ regd_users.post("/login", (req,res) => {
     }
 });
 
-// Add or modify a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
     const isbn = req.params.isbn;
     const review = req.query.review;
-    const username = req.session.authorization.username;
+    
+    // Get username from the session
+    const username = req.session && req.session.authorization ? 
+        jwt.decode(req.session.authorization.accessToken).username : 
+        null;
+
+    if (!username) {
+        return res.status(401).json({message: "User not logged in"});
+    }
 
     try {
-        // Check if book exists
         if (!books[isbn]) {
             return res.status(404).json({message: "Book not found"});
         }
 
-        // Check if review is provided
         if (!review) {
             return res.status(400).json({message: "Review text is required"});
         }
 
-        // Add or modify the review
         books[isbn].reviews[username] = review;
 
         return res.status(200).json({
