@@ -99,16 +99,30 @@ public_users.get('/isbn/:isbn', async (req, res) => {
     }
 });
   
-// Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-    const authorName = req.params.author;
-    const booksByAuthor = [];
-    
+// Function to fetch books by author using async/await
+const getBooksByAuthor = async (author) => {
+    console.log(`Starting author search for ${author}`);
     try {
-        // Get all keys (ISBNs) from books object
+        console.log('Making Axios request...');
+        const response = await axios.get(`http://localhost:5000/api/author/${author}`);
+        console.log('Axios request completed');
+        return response.data;
+    } catch (error) {
+        console.log('Error in Axios request');
+        throw error;
+    }
+};
+
+// Mock API endpoint for author search with artificial delay
+public_users.get('/api/author/:author', (req, res) => {
+    const authorName = req.params.author;
+    console.log(`Mock API received request for author: ${authorName}`);
+    
+    // Add artificial delay
+    setTimeout(() => {
+        const booksByAuthor = [];
         const keys = Object.keys(books);
         
-        // Iterate through books and check author
         keys.forEach(isbn => {
             if (books[isbn].author.toLowerCase() === authorName.toLowerCase()) {
                 booksByAuthor.push({
@@ -119,12 +133,30 @@ public_users.get('/author/:author', function (req, res) {
         });
 
         if (booksByAuthor.length > 0) {
-            return res.status(200).json(JSON.parse(JSON.stringify(booksByAuthor)));
+            console.log(`Mock API sending response for author: ${authorName}`);
+            res.json(booksByAuthor);
         } else {
-            return res.status(404).json({message: "No books found for this author"});
+            console.log(`Mock API - No books found for author: ${authorName}`);
+            res.status(404).json({message: "No books found for this author"});
         }
-    } catch(error) {
-        return res.status(500).json({message: "Error retrieving books"});
+    }, 1000); // 1 second delay
+});
+
+// Main author endpoint using async/await
+public_users.get('/author/:author', async (req, res) => {
+    const authorName = req.params.author;
+    console.log(`Received request for author: ${authorName}`);
+    
+    try {
+        console.log('Calling getBooksByAuthor...');
+        const books = await getBooksByAuthor(authorName);
+        console.log('Books data received');
+        res.status(200).json(books);
+    } catch (error) {
+        console.log('Error caught in main endpoint');
+        res.status(500).json({
+            message: error.response?.data?.message || "Error retrieving books"
+        });
     }
 });
 
