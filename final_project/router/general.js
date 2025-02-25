@@ -160,16 +160,30 @@ public_users.get('/author/:author', async (req, res) => {
     }
 });
 
-// Get all books based on title
-public_users.get('/title/:title', function (req, res) {
-    const bookTitle = req.params.title;
-    const booksByTitle = [];
-    
+// Function to fetch books by title using async/await
+const getBooksByTitle = async (title) => {
+    console.log(`Starting title search for ${title}`);
     try {
-        // Get all keys (ISBNs) from books object
+        console.log('Making Axios request...');
+        const response = await axios.get(`http://localhost:5000/api/title/${title}`);
+        console.log('Axios request completed');
+        return response.data;
+    } catch (error) {
+        console.log('Error in Axios request');
+        throw error;
+    }
+};
+
+// Mock API endpoint for title search with artificial delay
+public_users.get('/api/title/:title', (req, res) => {
+    const bookTitle = req.params.title;
+    console.log(`Mock API received request for title: ${bookTitle}`);
+    
+    // Add artificial delay
+    setTimeout(() => {
+        const booksByTitle = [];
         const keys = Object.keys(books);
         
-        // Iterate through books and check title
         keys.forEach(isbn => {
             if (books[isbn].title.toLowerCase().includes(bookTitle.toLowerCase())) {
                 booksByTitle.push({
@@ -180,12 +194,30 @@ public_users.get('/title/:title', function (req, res) {
         });
 
         if (booksByTitle.length > 0) {
-            return res.status(200).json(JSON.parse(JSON.stringify(booksByTitle)));
+            console.log(`Mock API sending response for title: ${bookTitle}`);
+            res.json(booksByTitle);
         } else {
-            return res.status(404).json({message: "No books found with this title"});
+            console.log(`Mock API - No books found with title: ${bookTitle}`);
+            res.status(404).json({message: "No books found with this title"});
         }
-    } catch(error) {
-        return res.status(500).json({message: "Error retrieving books"});
+    }, 1000); // 1 second delay
+});
+
+// Main title endpoint using async/await
+public_users.get('/title/:title', async (req, res) => {
+    const bookTitle = req.params.title;
+    console.log(`Received request for title: ${bookTitle}`);
+    
+    try {
+        console.log('Calling getBooksByTitle...');
+        const books = await getBooksByTitle(bookTitle);
+        console.log('Books data received');
+        res.status(200).json(books);
+    } catch (error) {
+        console.log('Error caught in main endpoint');
+        res.status(500).json({
+            message: error.response?.data?.message || "Error retrieving books"
+        });
     }
 });
 
