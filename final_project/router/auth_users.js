@@ -30,6 +30,12 @@ regd_users.post("/login", (req,res) => {
         }, 'access-token-secret', {
             expiresIn: '1h'
         });
+        
+        // Store token in session
+        req.session.authorization = {
+            accessToken
+        };
+        
         return res.status(200).json({accessToken});
     } else {
         return res.status(401).json({message: "Invalid credentials"});
