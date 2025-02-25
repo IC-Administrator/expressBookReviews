@@ -52,32 +52,47 @@ public_users.get('/', async (req, res) => {
 
 // Function to fetch book by ISBN using async/await
 const getBookByISBN = async (isbn) => {
+    console.log(`Starting ISBN search for ${isbn}`);
     try {
+        console.log('Making Axios request...');
         const response = await axios.get(`http://localhost:5000/api/isbn/${isbn}`);
+        console.log('Axios request completed');
         return response.data;
     } catch (error) {
+        console.log('Error in Axios request');
         throw error;
     }
 };
 
-// Mock API endpoint for ISBN
+// Mock API endpoint for ISBN with artificial delay
 public_users.get('/api/isbn/:isbn', (req, res) => {
     const isbn = req.params.isbn;
-    if (books[isbn]) {
-        res.json(books[isbn]);
-    } else {
-        res.status(404).json({message: "Book not found"});
-    }
+    console.log(`Mock API received request for ISBN: ${isbn}`);
+    
+    // Add artificial delay
+    setTimeout(() => {
+        if (books[isbn]) {
+            console.log(`Mock API sending response for ISBN: ${isbn}`);
+            res.json(books[isbn]);
+        } else {
+            console.log(`Mock API - Book not found for ISBN: ${isbn}`);
+            res.status(404).json({message: "Book not found"});
+        }
+    }, 1000); // 1 second delay
 });
 
 // Main ISBN endpoint using async/await
 public_users.get('/isbn/:isbn', async (req, res) => {
     const isbn = req.params.isbn;
+    console.log(`Received request for ISBN: ${isbn}`);
     
     try {
+        console.log('Calling getBookByISBN...');
         const book = await getBookByISBN(isbn);
+        console.log('Book data received');
         res.status(200).json(book);
     } catch (error) {
+        console.log('Error caught in main endpoint');
         res.status(500).json({
             message: error.response?.data?.message || "Error retrieving book"
         });
